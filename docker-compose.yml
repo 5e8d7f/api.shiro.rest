@@ -1,0 +1,16 @@
+services:
+  api:
+    hostname: api.shiro.local
+    container_name: api
+    build: .
+    restart: always
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    networks:
+      - shiro
+
+networks:
+  shiro:
+    external: true

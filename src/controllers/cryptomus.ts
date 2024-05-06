@@ -1,57 +1,34 @@
-import Elysia, { t } from "elysia";
-import { Cryptomus } from "cryptomus-sdk";
+import Elysia from "elysia";
+import postgres from "postgres";
+import { codeRegex } from "../utils/convert";
 
-const cryptomus = new Cryptomus(
-  process.env.MERCHANT_ID!,
-  process.env.PAYMENT_KEY!,
-  process.env.PAYOUT_KEY!,
-);
+const sql = postgres(process.env.DATABASE_URL!);
 
 export const CryptomusController = (app: Elysia) => {
-  app.get("/check/:code", async ({ params: { code } }) => {
-    const checkPayment = await cryptomus.getPaymentInfo({
-      order_id: code,
-    });
-
-    return {
-      success:
-        checkPayment.result.status === "PAID" ||
-        checkPayment.result.status === "PAID_OVER",
-    };
-  });
-  app.post(
-    "/create/:amount",
-    async ({ params: { amount } }: { params: { amount: string } }) => {
-      const code = `SHIRO-${Math.random().toString(36).substr(2, 9)}-REST`;
-
-      const createPayment = await cryptomus.createPayment({
-        amount: amount.toString(),
-        currency: "USD",
-        order_id: code,
-        additional_data: code,
-        url_callback: "https://api.shiro.rest/callback",
-        url_return: `https://www.shiro.rest/success/${code}`,
-      });
-
-      return {
-        code,
-        payment_url: createPayment.result.url,
-      };
-    },
-  );
-
   app.post(
     "/callback",
     async ({
-      body: { order_id, status },
+      set,
+      body: { order_id, status, additional_data },
     }: {
-      body: { order_id: string; status: string };
+      set: { status: number };
+      body: { order_id: string; status: string; additional_data: string };
     }) => {
-      if (status === "PAID" || status === "PAID_OVER") {
-        console.log(`Payment for order ${order_id} is successful!`);
+      if (!codeRegex.test(order_id)) {
+        set.status = 400;
+        return { message: "Invalid order id" };
       }
-
-      return "ok";
+      if (status === "PAID" || status === "PAID_OVER") {
+        const credits = parseInt(additional_data);
+        console.log(`Payment for order ${order_id} is successful!`);
+        await sql`INSERT INTO invoices(receipt_id, amount) VALUES(${order_id}, ${credits})`;
+        set.status = 200;
+        return { message: "Payment successful" };
+      } else {
+        console.log(`Payment for order ${order_id} is failed!`);
+        set.status = 400;
+        return { message: "Payment failed" };
+      }
     },
   );
 

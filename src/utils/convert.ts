@@ -1,1 +1,1 @@
-export const amountToCredits = (amount: number) => amount * 0.01;
+export const codeRegex = /SHIRO-[A-Z0-9]{8}-REST/;

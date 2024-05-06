@@ -2,11 +2,9 @@
   "name": "api",
   "scripts": {
     "dev": "NODE_ENV=development bun --bun --watch src/index.ts",
-    "start": "NODE_ENV=production bun --bun src/index.ts",
-    "prepare": "custompatch"
+    "start": "NODE_ENV=production bun --bun src/index.ts"
   },
   "dependencies": {
-    "cryptomus-sdk": "^3.0.0",
     "elysia": "^1.0.16",
     "postgres": "^3.4.4"
   },
