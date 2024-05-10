@@ -1,12 +1,27 @@
-FROM oven/bun:alpine
+FROM oven/bun:1.1.8-alpine as base
 
 WORKDIR /app
 
-COPY package.json /app/
-COPY bun.lockb /app/
+FROM base as deps
 
+COPY package.json bun.lockb ./
 RUN bun install
 
-COPY . /app
+FROM base as build
 
-CMD ["bun", "run", "start"]
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN bun build ./src/index.ts --target=bun --outfile=server.js --minify
+
+FROM base as final
+
+USER bun
+ENV NODE_ENV production
+
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/server.js ./server.js
+
+CMD ["bun", "--bun", "server.js"]
