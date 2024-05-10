@@ -2,7 +2,7 @@ import Elysia from "elysia";
 
 import * as controllers from "./controllers";
 
-const app = new Elysia().listen(3000);
+const app = new Elysia().listen(3000).onError((err) => console.error(err));
 
 app.use(controllers.IndexController);
 app.use(controllers.CryptomusController);

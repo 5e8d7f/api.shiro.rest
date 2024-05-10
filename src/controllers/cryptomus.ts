@@ -1,8 +1,14 @@
 import Elysia from "elysia";
 import postgres from "postgres";
-import { codeRegex, moneyToCredits } from "../utils/convert";
+import { moneyToCredits } from "../utils/convert";
 
-const sql = postgres(process.env.DATABASE_URL!);
+const sql = postgres({
+  host: process.env.POSTGRES_HOST,
+  port: parseInt(process.env.POSTGRES_PORT || "5432"),
+  database: process.env.POSTGRES_DB,
+  username: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+});
 
 export const CryptomusController = (app: Elysia) => {
   app.post(
@@ -14,21 +20,15 @@ export const CryptomusController = (app: Elysia) => {
       set: { status: number };
       body: { order_id: string; status: string; payment_amount_usd: string };
     }) => {
-      if (!codeRegex.test(order_id)) {
-        set.status = 400;
-        return { message: "Invalid order id" };
-      }
       if (status === "paid" || status === "paid_over") {
         const credits = moneyToCredits(payment_amount_usd);
         console.log(`Payment for order ${order_id} is successful!`);
-        await sql`INSERT INTO invoices(receipt_id, amount) VALUES(${order_id}, ${credits})`;
+        await sql`INSERT INTO invoices(code, amount) VALUES(${order_id}, ${credits})`;
         set.status = 200;
         return { message: "Payment successful" };
       } else {
+        console.log(`Payment for order ${order_id} failed!`);
         set.status = 400;
-        console.log(
-          `Payment for order ${order_id} has failed! (status: ${status})`,
-        );
         return { message: "Payment failed" };
       }
     },

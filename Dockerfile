@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV production
-RUN bun build ./src/index.ts --target=bun --outfile=server.js --minify
+RUN bun build ./src/index.ts --target=bun --outfile=server.js
 
 FROM base as final
 
