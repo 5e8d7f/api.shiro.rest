@@ -18,7 +18,7 @@ export const CryptomusController = (app: Elysia) => {
         set.status = 400;
         return { message: "Invalid order id" };
       }
-      if (status === "PAID" || status === "PAID_OVER") {
+      if (status === "paid" || status === "paid_over") {
         const credits = moneyToCredits(payment_amount_usd);
         console.log(`Payment for order ${order_id} is successful!`);
         await sql`INSERT INTO invoices(receipt_id, amount) VALUES(${order_id}, ${credits})`;
@@ -26,6 +26,9 @@ export const CryptomusController = (app: Elysia) => {
         return { message: "Payment successful" };
       } else {
         set.status = 400;
+        console.log(
+          `Payment for order ${order_id} has failed! (status: ${status})`,
+        );
         return { message: "Payment failed" };
       }
     },
