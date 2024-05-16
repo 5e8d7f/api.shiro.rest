@@ -1,4 +1,4 @@
-FROM oven/bun:1.1.8-alpine as base
+FROM oven/bun:1.1.8-alpine AS base
 
 WORKDIR /app
 
@@ -13,15 +13,13 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NODE_ENV production
 RUN bun build ./src/index.ts --target=bun --outfile=server.js
 
-FROM base as final
-
-USER bun
+FROM oven/bun:1.1.8-distroless AS final
+USER nonroot
 
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/server.js ./server.js
 
-CMD ["bun", "--bun", "server.js"]
+CMD ["./server.js"]
