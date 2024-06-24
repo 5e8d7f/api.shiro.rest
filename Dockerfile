@@ -1,4 +1,4 @@
-FROM oven/bun:1.1.10-alpine AS base
+FROM oven/bun:1.1.16-alpine AS base
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun build ./src/index.ts --target=bun --outfile=server.js
 
-FROM oven/bun:1.1.10-distroless AS final
+FROM oven/bun:1.1.16-distroless AS final
 USER nonroot
 
 COPY --from=build /app/package.json ./package.json
